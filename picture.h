@@ -2,9 +2,8 @@
 #define PICTURE_H
 
 #include "pixel.h"
-#include <iostream>
+
 #include <vector>
-#include <math.h>
 #include <fstream>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,7 +67,7 @@ Picture::Picture(const std::string& file_name, const std::string& picture_name) 
 
     //assigning textures
     for(int i = 0; i < x_size*y_size; i++) {
-        pixel[i].v_num = pixel[i].get_v() / ((h_v-l_v)/num_gradients);
+        pixel[i].v_num = num_gradients - pixel[i].get_v() / ((h_v-l_v)/num_gradients);
         pixel[i].s_num = pixel[i].get_s() / ((h_s-l_s) / (pixel[i].v_num+1));    
     }   
 }
@@ -82,31 +81,29 @@ void Picture::print(const std::string& low_value_color_hex, const std::string& l
     int l_sat_r, l_sat_g, l_sat_b;
     int l_val_r, l_val_g, l_val_b;
 
-    l_val_r = hex_to_int(low_value_color_hex.substr(0,2));
-    l_val_g = hex_to_int(low_value_color_hex.substr(2,2));
-    l_val_b = hex_to_int(low_value_color_hex.substr(4,2));
+    l_val_r = std::stoi(low_value_color_hex.substr(0,2),0,16);
+    l_val_g = std::stoi(low_value_color_hex.substr(2,2),0,16);
+    l_val_b = std::stoi(low_value_color_hex.substr(4,2),0,16);
 
-    l_sat_r = hex_to_int(low_saturation_color_hex.substr(0,2));
-    l_sat_g = hex_to_int(low_saturation_color_hex.substr(2,2));
-    l_sat_b = hex_to_int(low_saturation_color_hex.substr(4,2));
+    l_sat_r = std::stoi(low_saturation_color_hex.substr(0,2),0,16);
+    l_sat_g = std::stoi(low_saturation_color_hex.substr(2,2),0,16);
+    l_sat_b = std::stoi(low_saturation_color_hex.substr(4,2),0,16);
 
-    h_sat_r = hex_to_int(high_saturation_color_hex.substr(0,2));
-    h_sat_g = hex_to_int(high_saturation_color_hex.substr(2,2));
-    h_sat_b = hex_to_int(high_saturation_color_hex.substr(4,2));
+    h_sat_r = std::stoi(high_saturation_color_hex.substr(0,2),0,16);
+    h_sat_g = std::stoi(high_saturation_color_hex.substr(2,2),0,16);
+    h_sat_b = std::stoi(high_saturation_color_hex.substr(4,2),0,16);
 
     std::vector<int> pic;
-    std::string temp;
+    int temp;
     for(int i=0; i<pixel.size(); i++) {
-        temp = pixel[i].texture();
-        pic[i*2] = std::stoi(temp[0]);
-        pic[i*2+1] = std::stoi(temp[1]);
-        pic[i*2+x_size] = std::stoi(temp[2]);
-        pic[i*2+x_size+1] = std::stoi(temp[3]);
+        std::cout<<i<<std::endl;
+        temp = pixel[i].texture(); /////HERE
+        pic[i*2] = temp%10;
+        pic[i*2+1] = temp%100/10;
+        pic[i*2+x_size] = temp%1000/100;
+        pic[i*2+x_size+1] = temp%10000/1000;
 
         if(!i%x_size && i!=0) i+=x_size;
-        // pic[i*2] = get_color_temp(pixel[i].texture,0);
-        // pic[i*2+1] = get_color_temp(pixel[i].texture,0);
-        // pic[i*2+1] = 
     }
 
     std::ofstream p;
@@ -115,10 +112,19 @@ void Picture::print(const std::string& low_value_color_hex, const std::string& l
     p<<type<<" "<<x_size<<" "<<y_size<<" "<<intensity<<"\n";
     //body of ppm
     for(int i=0; i<pixel.size(); i++) {
-
-        // p<<pixel[i].r<<' ';
-        // p<<pixel[i].g<<' ';
-        // p<<pixel[i].b<<"\t";
+        if(pic[i] == 0) {
+            p<<l_sat_r<<' '<<l_sat_g<<' '<<l_sat_b<<"\t";
+        }
+        else if (pic[i] == 1) {
+            p<<l_val_r<<' '<<l_val_g<<' '<<l_val_b<<"\t";
+        }
+        else if (pic[i] == 2) {
+            p<<h_sat_r<<' '<<h_sat_g<<' '<<h_sat_b<<"\t";
+        }
+        else 
+        {
+            std::cout<<"ya done fucked up somewhere :)"<<std::endl;
+        }
     }
     p.close();
 }

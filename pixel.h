@@ -1,8 +1,12 @@
 #ifndef PIXEL_H
 #define PIXEL_H
 
+#include <iostream>
+#include <math.h>
+
 class Pixel {
 public:
+    const static int TWO_PIX_NUM = 3012;
     int r,g,b;
     int v_num,s_num;
     
@@ -10,7 +14,7 @@ public:
     
     int get_s();
     int get_v();
-    std::string texture();    
+    int texture(); 
 };
 
 Pixel::Pixel(const int& r, const int& g, const int& b) {
@@ -20,18 +24,27 @@ Pixel::Pixel(const int& r, const int& g, const int& b) {
 };
 
 int Pixel::get_s() {
-    return 0;
+    int l = r;
+    int h = get_v();
+    if(l > g) l = g;
+    if(l > b) l = b;
+    return (h-l)/(h?h:1); // dont wanna / by 0
 }
 
 int Pixel::get_v() {
-    return 0;
+    int h = r;
+    if(h < g) h = g;
+    if(h < b) h = b;
+    return h;
 }
 
-std::string Pixel::texture() {
-    std::string temp = "0000";
+int Pixel::texture() {
+    int temp = 0;
     for(int i=0; i<4; i++) {
-        temp[0] = v_num;
+        if(i < v_num) temp += std::pow(10 ,TWO_PIX_NUM % (int)(std::pow(10,4-i)) / std::pow(10,4-1-i));
+        if(i < s_num) temp += 2*std::pow(10 ,TWO_PIX_NUM % (int)(std::pow(10,i+1) / std::pow(10,i)));
     }
+    //TWO_PIX_NUM.substring(v_num-5,1);
     return temp;
 }
 
