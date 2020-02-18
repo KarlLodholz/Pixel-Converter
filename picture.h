@@ -36,20 +36,10 @@ private:
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//do not include # in hex number and use Capital letters only
-int hex_to_int(const std::string& hex) {
-    int num = 0;
-    for(int i = 0; i < hex.size(); i++)
-        num += (hex[i]-(hex[i]>57? 65:48))*std::pow(16,hex.size()-1-i);
-    return num;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 Picture::Picture(const std::string& file_name, const std::string& picture_name) {
     this -> file_name = file_name;
     this -> picture_name = picture_name;
-    
+
     //read file and fill in pixel
     std::ifstream f;
     std::string b0,b1,b2;
@@ -58,16 +48,21 @@ Picture::Picture(const std::string& file_name, const std::string& picture_name) 
     f>>x_size;
     f>>y_size;
     f>>intensity;
+
+    l_s = l_v = intensity; 
+    h_s = h_v = 0;
+
     for(int i=0;i<x_size*y_size;i++) {
         f>>b0;f>>b1;f>>b2;
         pixel.push_back(Pixel(std::stoi(b0),std::stoi(b1),std::stoi(b2)));
+        //std::cout<<pixel[i].get_v()<<" "<<pixel[i].get_s()<<std::endl;
         update_range(pixel[i]);
     }
     f.close();
 
     //assigning textures
     for(int i = 0; i < x_size*y_size; i++) {
-        pixel[i].v_num = num_gradients - pixel[i].get_v() / ((h_v-l_v)/num_gradients);
+        pixel[i].v_num = num_gradients - pixel[i].get_v() / (((h_v-l_v)/num_gradients)?((h_v-l_v)/num_gradients):1);
         pixel[i].s_num = pixel[i].get_s() / ((h_s-l_s) / (pixel[i].v_num+1));    
     }   
 }
@@ -93,40 +88,44 @@ void Picture::print(const std::string& low_value_color_hex, const std::string& l
     h_sat_g = std::stoi(high_saturation_color_hex.substr(2,2),0,16);
     h_sat_b = std::stoi(high_saturation_color_hex.substr(4,2),0,16);
 
-    std::vector<int> pic;
+    std::vector<int> pic(pixel.size()*4, 0);
     int temp;
-    for(int i=0; i<pixel.size(); i++) {
-        std::cout<<i<<std::endl;
-        temp = pixel[i].texture(); /////HERE
-        pic[i*2] = temp%10;
-        pic[i*2+1] = temp%100/10;
-        pic[i*2+x_size] = temp%1000/100;
-        pic[i*2+x_size+1] = temp%10000/1000;
-
-        if(!i%x_size && i!=0) i+=x_size;
+    for(int y=0; y<y_size; y++) {
+        for(int x=0; x<x_size; x++) {
+            temp = pixel[y*x_size+x].texture();
+            pic[(y*x_size+x+y*x_size)*2] = temp%10;
+            pic[(y*x_size+x+y*x_size)*2+1] = temp%100/10;
+            pic[(y*x_size+x+y*x_size)*2+x_size*2] = temp%1000/100;
+            pic[(y*x_size+x+y*x_size)*2+x_size*2+1] = temp%10000/1000;
+        }
     }
-
     std::ofstream p;
     p.open(picture_name+".ppm");
     //header
-    p<<type<<" "<<x_size<<" "<<y_size<<" "<<intensity<<"\n";
+    p<<"P3"<<" "<<x_size*2<<" "<<y_size*2<<" "<<intensity<<"\n";
     //body of ppm
-    for(int i=0; i<pixel.size(); i++) {
+    for(int i=0; i<pic.size(); i++) {
+       //std::cout<<pic[i]<<std::endl;
         if(pic[i] == 0) {
             p<<l_sat_r<<' '<<l_sat_g<<' '<<l_sat_b<<"\t";
         }
         else if (pic[i] == 1) {
             p<<l_val_r<<' '<<l_val_g<<' '<<l_val_b<<"\t";
         }
-        else if (pic[i] == 2) {
+        else{
             p<<h_sat_r<<' '<<h_sat_g<<' '<<h_sat_b<<"\t";
         }
-        else 
-        {
-            std::cout<<"ya done fucked up somewhere :)"<<std::endl;
-        }
+        
+        if(i && !x_size%i)p<<'\n';
     }
     p.close();
+
+    // testing purposes 
+    // p.open("sample.ppm");
+    // p<<"P3"<<" "<<x_size<<" "<<y_size<<" "<<intensity<<"\n";
+    // for(int i=0; i<pixel.size(); i++) {
+    //     p<<pixel[i].r<<" "<<pixel[i].g<<" "<<pixel[i].b<<"\t";
+    // }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
