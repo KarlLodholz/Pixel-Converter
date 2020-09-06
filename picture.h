@@ -18,7 +18,6 @@ public:
     
     std::vector<Pixel> pixel;
 
-    std::string file_name;
     std::string picture_name;
     
     //ppm header stuff
@@ -26,7 +25,7 @@ public:
     int x_size,y_size;
     int intensity;
 
-    Picture(const std::string& file_name, const std::string& picture_name);
+    Picture(const std::string& picture_name);
 
     void print(const std::string& low_value_color_hex, const std::string& low_saturation_color_hex, const std::string& high_saturation_color_hex);
 
@@ -36,14 +35,13 @@ private:
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Picture::Picture(const std::string& file_name, const std::string& picture_name) {
-    this -> file_name = file_name;
+Picture::Picture(const std::string& picture_name) {
     this -> picture_name = picture_name;
 
     //read file and fill in pixel
     std::ifstream f;
     std::string b0,b1,b2;
-    f.open(file_name);
+    f.open("temp.ppm");
     f.seekg(3);
     f>>x_size;
     f>>y_size;
@@ -100,7 +98,7 @@ void Picture::print(const std::string& low_value_color_hex, const std::string& l
         }
     }
     std::ofstream p;
-    p.open(picture_name+".ppm");
+    p.open("temp1.ppm");
     //header
     p<<"P3"<<" "<<x_size*2<<" "<<y_size*2<<" "<<intensity<<"\n";
     //body of ppm
@@ -120,12 +118,7 @@ void Picture::print(const std::string& low_value_color_hex, const std::string& l
     }
     p.close();
 
-    // testing purposes 
-    // p.open("sample.ppm");
-    // p<<"P3"<<" "<<x_size<<" "<<y_size<<" "<<intensity<<"\n";
-    // for(int i=0; i<pixel.size(); i++) {
-    //     p<<pixel[i].r<<" "<<pixel[i].g<<" "<<pixel[i].b<<"\t";
-    // }
+    std::system(("convert temp1.ppm "+picture_name+"; rm temp1.ppm").c_str());
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
